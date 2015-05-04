@@ -1,5 +1,6 @@
 from ctypes import cdll
 lib = cdll.LoadLibrary('./libFoo.so')
+import ctypes
 
 class Foo(object):
     def __init__(self):
@@ -12,33 +13,81 @@ class Foo(object):
     def raise_fault(self, dummy):
         lib.Foo_raise_fault(self.obj)
 
+def print_results(result):
+    print "callback result: ***************** " + str (result)
+    
+def init_worker():
+    signal.signal(signal.SIGSEGV, sig_handler)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    
 def raise_a_fault(dummy):
+    # signal.signal(signal.SIGSEGV, sig_handler)
+    # signal.signal(signal.SIGINT, signal.SIG_IGN)
+    # os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
+    print "raise_a_fault, pid " + str(os.getpid())
     try:
         return lib.raise_a_fault(dummy)
     except Exception as inst:
-        print "The fault is " + str(inst)          
+        print "The fault is " + str(inst)
+        # ctypes.set_errno(-2)          
 
 from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 import signal
 import os
 
+
 def sig_handler(signum, frame):
     print "segfault"
-    raise Exception
+    # time.Sleep(0.001)
+    print "sig_handler, pid " + str(os.getpid())
+    print "sig_handler, ppid " + str(os.getppid())
+    print "frame: " + str(frame)
+    print(
+        "Execution inside '{0}', "
+        "with local namespace: {1}"
+        .format(frame.f_code.co_name, frame.f_locals.keys()))
+    # os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
+    # raise Exception
+    # ctypes.set_errno(-2)
     return None
+# os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
+signal.signal(signal.SIGINT, signal.SIG_IGN)
 signal.signal(signal.SIGSEGV, sig_handler)
-os.kill(os.getpid(), signal.SIGSEGV)
+signal.signal(signal.SIGTERM, sig_handler)
+signal.signal(signal.SIGINT, sig_handler)
 
-# p = Pool(1)
+
+processes_pool = Pool(2, init_worker)
+# processes_pool = ThreadPool(1)
+# init_worker()
+print "main, pid " + str(os.getpid())
 # f = Foo()
 # f.bar() #and you will see "Hello" on the screens
 # f.fault() #this should cause a segmentation fault and the function will not return
-items = [1, 2, 3, 4, 5]
+items = [1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2]
+
 try:
-# results = p.map(raise_a_fault, items)
-
-    results = raise_a_fault(5) #this should cause a segmentation fault and the function will not return
+    for item in items:
+        # this ensures the results come out in the same order the the experiemtns are in this list.
+        try:
+            # result = processes_pool.apply_async(raise_a_fault, args = (item, ), callback = print_results)
+            # result.get(timeout=1)
+            # results = processes_pool.map(raise_a_fault, items).get(timeout=1)
+            results = raise_a_fault(item)
+            # result.get(timeout=2)
+            # result.get()
+        except Exception as inst:
+            print "The exception is " + str(inst)
+            continue
+    processes_pool.close()
+    processes_pool.join()
+    
 except Exception as inst:
-    print "The exception is " + str(inst)
+    print "The Out exception is " + str(inst)
 
-print "Results: " + str(results)
+    # results = raise_a_fault(5) #this should cause a segmentation fault and the function will not return
+
+# print "Results: " + str(results)
+print "All Done!"
