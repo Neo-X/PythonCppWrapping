@@ -5,6 +5,7 @@
 #include <stdlib.h>     /* exit, EXIT_FAILURE */
 // #include <thread>         // std::this_thread::sleep_for
 // #include <chrono>         // std::chrono::seconds
+#include <exception>
 
 
 #ifdef _WIN32
@@ -26,9 +27,13 @@
 void sighandler(int signum)
 {
 	printf("Process %d got signal %d\n", getpid(), signum);
-	raise(SIGSEGV);
+	// raise(SIGSEGV);
 	// _sleep(1000);
+
+	throw std::exception();
+
     signal(signum, SIG_DFL);
+    // signal(signum, SIG_IGN);
 	// std::chrono::milliseconds timespan(111605); // or whatever
 	// std::this_thread::sleep_for(timespan);
 	// kill(getpid(), signum);
@@ -43,18 +48,26 @@ extern "C" {
 
     int raise_a_fault(int r)
 	{
-    	signal(SIGSEGV, sighandler);
+    	// signal(SIGSEGV, sighandler);
     	std::cout << "r is "<< r << std::endl;
-    	if (r > 3)
+    	try
     	{
-    		// raise(SIGSEGV);
-    		volatile int *p = reinterpret_cast<volatile int*>(0);
-			*p = 0x1337D00D;
-			return 0;
+			if (r > 3)
+			{
+				// raise(SIGSEGV);
+				volatile int *p = reinterpret_cast<volatile int*>(0);
+				*p = 0x1337D00D;
+				return 0;
+			}
+			else
+			{
+				return r;
+			}
     	}
-    	else
-    	{
-    		return r;
-    	}
+    	catch (std::exception &e)
+		{
+    		std::cerr << "\nERROR: exception caught in Main:\n" << e.what() << "\n";
+			return (int) NULL;
+		}
 	}
 }
