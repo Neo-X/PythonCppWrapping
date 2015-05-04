@@ -26,10 +26,12 @@ def init_worker():
 
     
 def raise_a_fault(dummy):
+    import time
     # signal.signal(signal.SIGSEGV, sig_handler)
     # signal.signal(signal.SIGINT, signal.SIG_IGN)
     # os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
     print "raise_a_fault, pid " + str(os.getpid())
+    time.sleep(0.5)
     try:
     	out = lib.raise_a_fault(dummy)
     except Exception as inst:
@@ -77,7 +79,7 @@ print "main, pid " + str(os.getpid())
 # f = Foo()
 # f.bar() #and you will see "Hello" on the screens
 # f.fault() #this should cause a segmentation fault and the function will not return
-items = [1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2]
+items = [1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2, 1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2, 1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2, 1, 2, 3, 4, 5, 4, 3, 2, 1, 10, 2]
 """
 try:
 	# results = processes_pool.map(raise_a_fault, items).get(timeout=1)
@@ -86,19 +88,26 @@ except Exception as inst:
     print "The exception is " + str(inst)
 print results
 """
-
+results=[]
+out = []
 try:
     for item in items:
         # this ensures the results come out in the same order the the experiemtns are in this list.
         try:
             result = processes_pool.apply_async(raise_a_fault, args = (item, ), callback = print_results)
+            results.append(result)
             # results = raise_a_fault(item)
-            result.get(timeout=2)
             # result.get()
         except Exception as inst:
             print "The exception is " + str(inst)
             continue
     # processes_pool.close()
+    for result in results:
+        try:
+            out.append(result.get(timeout=2))
+        except Exception as inst:
+            print "The exception getting result " + str(inst)
+            continue
     processes_pool.join()
     
 except Exception as inst:
@@ -106,5 +115,6 @@ except Exception as inst:
 
     # results = raise_a_fault(5) #this should cause a segmentation fault and the function will not return
 
-# print "Results: " + str(results)
+print "Results: " + str(out)
 print "All Done!"
+
