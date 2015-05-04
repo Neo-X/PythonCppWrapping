@@ -107,9 +107,8 @@ try:
             out.append(result.get(timeout=2))
         except Exception as inst:
             print "Exception getting result " + str(inst)
-            result.terminate()
             continue
-    # processes_pool.terminate()
+    processes_pool.terminate()
     processes_pool.join()
     
 except Exception as inst:
