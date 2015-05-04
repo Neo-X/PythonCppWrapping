@@ -37,9 +37,9 @@ def raise_a_fault(dummy):
         return None
         # ctypes.set_errno(-2)
     if out is None:
-    	raise Exception('SteerSuite fault')
+    	raise Exception('Runtime fault')
     print "Done causing error: " + str(out)
-    return lib.raise_a_fault(dummy)
+    return out
                   
 
 from multiprocessing import Pool
@@ -59,18 +59,19 @@ def sig_handler(signum, frame):
         "with local namespace: {1}"
         .format(frame.f_code.co_name, frame.f_locals.keys()))
     # os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
-    # raise Exception
+    # ise Exception
     # ctypes.set_errno(-11)
     return None
 # os.kill(os.getpid(), signal.SIGSEGV)# This somehow triggers the signal properly
 # signal.signal(signal.SIGINT, signal.SIG_IGN)
+# signal.signal(signal.SIGSEGV, signal.SIG_IGN)
 # signal.signal(signal.SIGSEGV, sig_handler)
 # signal.signal(signal.SIGTERM, sig_handler)
 # signal.signal(signal.SIGINT, sig_handler)
 
 
 processes_pool = Pool(2, init_worker)
-# processes_pool = ThreadPool(1)
+# processes_pool = ThreadPool(2)
 # init_worker()
 print "main, pid " + str(os.getpid())
 # f = Foo()

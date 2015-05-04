@@ -28,9 +28,9 @@ void sighandler(int signum)
 {
 	printf("Process %d got signal %d\n", getpid(), signum);
 	// raise(SIGSEGV);
-	// _sleep(1000);
+	_sleep(500);
 
-	throw std::exception();
+	// throw std::exception();
 
     signal(signum, SIG_DFL);
     // signal(signum, SIG_IGN);
@@ -48,7 +48,7 @@ extern "C" {
 
     int raise_a_fault(int r)
 	{
-    	// signal(SIGSEGV, sighandler);
+    	signal(SIGSEGV, sighandler);
     	std::cout << "r is "<< r << std::endl;
     	try
     	{
