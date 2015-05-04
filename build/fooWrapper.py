@@ -99,15 +99,17 @@ try:
             # results = raise_a_fault(item)
             # result.get()
         except Exception as inst:
-            print "The exception is " + str(inst)
+            print "Exception applying async " + str(inst)
             continue
     # processes_pool.close()
     for result in results:
         try:
             out.append(result.get(timeout=2))
         except Exception as inst:
-            print "The exception getting result " + str(inst)
+            print "Exception getting result " + str(inst)
+            result.terminate()
             continue
+    # processes_pool.terminate()
     processes_pool.join()
     
 except Exception as inst:
